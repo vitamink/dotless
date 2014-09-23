@@ -22,18 +22,36 @@ namespace dotless.Core.Input
             return File.ReadAllBytes(fileName);
         }
 
-        public string GetFileContents(string fileName)
+        public string GetFileContents(string currentPath, string fileName)
         {
-            fileName = PathResolver.GetFullPath(fileName);
+            fileName = PathResolver.GetFullPath(string.IsNullOrEmpty(currentPath) ? fileName : Path.Combine(currentPath, fileName));
 
             return File.ReadAllText(fileName);
         }
 
-        public bool DoesFileExist(string fileName)
+        public bool DoesFileExist(string currentPath, string fileName, out string existingFileName)
         {
-            fileName = PathResolver.GetFullPath(fileName);
+            bool exists;
 
-            return File.Exists(fileName);
+            if (File.Exists(PathResolver.GetFullPath(fileName)))
+            {
+                existingFileName = fileName;
+                exists = true;
+            }
+            else
+            {
+                fileName = PathResolver.GetFullPath(string.IsNullOrEmpty(currentPath) ? fileName : Path.Combine(currentPath, fileName));
+                if ((exists = File.Exists(fileName)))
+                {
+                    existingFileName = fileName;
+                }
+                else
+                {
+                    existingFileName = null;
+                }
+            }
+
+            return exists;
         }
 
         public bool UseCacheDependencies { get { return true; } }

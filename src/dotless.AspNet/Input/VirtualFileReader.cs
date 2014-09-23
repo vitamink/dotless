@@ -17,7 +17,7 @@ namespace dotless.Core.Input
             }
         }
 
-        public string GetFileContents(string fileName)
+        public string GetFileContents(string currentPath, string fileName)
         {
             var virtualPathProvider = HostingEnvironment.VirtualPathProvider;
             var virtualFile = virtualPathProvider.GetFile(fileName);
@@ -27,8 +27,9 @@ namespace dotless.Core.Input
             }
         }
 
-        public bool DoesFileExist(string fileName)
+        public bool DoesFileExist(string currentPath, string fileName, out string existingFile)
         {
+            existingFile = null;
             var virtualPathProvider = HostingEnvironment.VirtualPathProvider;
             return virtualPathProvider.FileExists(fileName);
         }

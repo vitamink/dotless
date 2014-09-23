@@ -18,7 +18,7 @@
         /// <summary>
         ///  Imports an import and return true if successful
         /// </summary>
-        ImportAction Import(Import import);
+        ImportAction Import(string currentPath, Import import);
 
         /// <summary>
         ///  A list of imports

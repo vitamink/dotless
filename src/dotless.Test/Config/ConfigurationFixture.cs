@@ -116,7 +116,7 @@ namespace dotless.Test.Config
 
         public class DummyFileReader : IFileReader
         {
-            public string GetFileContents(string fileName)
+            public string GetFileContents(string currentPath, string fileName)
             {
                 throw new NotImplementedException();
             }
@@ -126,7 +126,7 @@ namespace dotless.Test.Config
                 throw new NotImplementedException();
             }
 
-            public bool DoesFileExist(string fileName)
+            public bool DoesFileExist(string currentPath, string fileName, out string existingFile)
             {
                 throw new NotImplementedException();
             }

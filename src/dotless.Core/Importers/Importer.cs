@@ -136,7 +136,7 @@ namespace dotless.Core.Importers
         /// </summary>
         /// <param name="import"></param>
         /// <returns> The action for the import node to process</returns>
-        public virtual ImportAction Import(Import import)
+        public virtual ImportAction Import(string currentPath, Import import)
         {
             // if the import is protocol'd (e.g. http://www.opencss.com/css?blah) then leave the import alone
             if (IsProtocolUrl(import.Path) && !IsEmbeddedResource(import.Path))
@@ -170,9 +170,9 @@ namespace dotless.Core.Importers
             {
                 if (InlineCssFiles)
                 {
-                    if (IsEmbeddedResource(import.Path) && ImportEmbeddedCssContents(file, import))                         
+                    if (IsEmbeddedResource(import.Path) && ImportEmbeddedCssContents(currentPath, file, import))                         
                         return ImportAction.ImportCss;
-                    if (ImportCssFileContents(file, import))
+                    if (ImportCssFileContents(currentPath, file, import))
                         return ImportAction.ImportCss;
                 }
 
@@ -182,7 +182,7 @@ namespace dotless.Core.Importers
             if (Parser == null)
                 throw new InvalidOperationException("Parser cannot be null.");
 
-            if (!ImportLessFile(file, import))
+            if (!ImportLessFile(currentPath, file, import))
             {
                 if (import.Path.EndsWith(".less", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -205,26 +205,27 @@ namespace dotless.Core.Importers
         /// <summary>
         ///  Imports a less file and puts the root into the import node
         /// </summary>
-        protected bool ImportLessFile(string lessPath, Import import)
+        protected bool ImportLessFile(string currentPath, string lessPath, Import import)
         {
             string contents, file = null;
             if (IsEmbeddedResource(lessPath))
             {
-                contents = ResourceLoader.GetResource(lessPath, FileReader, out file);
+                contents = ResourceLoader.GetResource(currentPath, lessPath, FileReader, out file);
                 if (contents == null) return false;
             }
             else
             {
-                bool fileExists = FileReader.DoesFileExist(lessPath);
+                string fileName;
+                bool fileExists = FileReader.DoesFileExist(currentPath, lessPath, out fileName);
                 if (!fileExists && !lessPath.EndsWith(".less"))
                 {
                     lessPath += ".less";
-                    fileExists = FileReader.DoesFileExist(lessPath);
+                    fileExists = FileReader.DoesFileExist(currentPath, lessPath, out fileName);
                 }
 
                 if (!fileExists) return false;
 
-                contents = FileReader.GetFileContents(lessPath);
+                contents = FileReader.GetFileContents(null, fileName);
 
                 file = lessPath;
             }
@@ -237,7 +238,7 @@ namespace dotless.Core.Importers
                 {
                     Imports.Add(file);
                 }
-                import.InnerRoot = Parser().Parse(contents, lessPath);
+                import.InnerRoot = Parser().Parse(currentPath, contents, lessPath);
             }
             catch
             {
@@ -258,9 +259,9 @@ namespace dotless.Core.Importers
         /// <param name="file"></param>
         /// <param name="import"></param>
         /// <returns></returns>
-        private bool ImportEmbeddedCssContents(string file, Import import)
+        private bool ImportEmbeddedCssContents(string currentPath, string file, Import import)
         {
-            string content = ResourceLoader.GetResource(file, FileReader, out file);
+            string content = ResourceLoader.GetResource(currentPath, file, FileReader, out file);
             if (content == null) return false;
             import.InnerContent = content;
             return true;
@@ -269,14 +270,15 @@ namespace dotless.Core.Importers
         /// <summary>
         ///  Imports a css file and puts the contents into the import node
         /// </summary>
-        protected bool ImportCssFileContents(string file, Import import)
+        protected bool ImportCssFileContents(string currentPath, string file, Import import)
         {
-            if (!FileReader.DoesFileExist(file))
+            string fileName;
+            if (!FileReader.DoesFileExist(currentPath, file, out fileName))
             {
                 return false;
             }
 
-            import.InnerContent = FileReader.GetFileContents(file);
+            import.InnerContent = FileReader.GetFileContents(null, fileName);
             Imports.Add(file);
 
             return true;
@@ -311,7 +313,7 @@ namespace dotless.Core.Importers
         /// </summary>
         /// <param name="file">The path in the form: dll://AssemblyName/ResourceName</param>
         /// <returns>The content of the resource</returns>
-        public static string GetResource(string file, IFileReader fileReader, out string fileDependency)
+        public static string GetResource(string currentPath, string file, IFileReader fileReader, out string fileDependency)
         {
             fileDependency = null;
 
@@ -324,13 +326,13 @@ namespace dotless.Core.Importers
             try
             {
                 fileDependency = match.Groups["Assembly"].Value;
-
-                if (!fileReader.DoesFileExist(fileDependency))
+                string fileName;
+                if (!fileReader.DoesFileExist(currentPath, fileDependency, out fileName))
                 {
                     throw new FileNotFoundException("Unable to locate assembly file [" + fileDependency + "]");
                 }
 
-                loader._fileContents = fileReader.GetBinaryFileContents(fileDependency);
+                loader._fileContents = fileReader.GetBinaryFileContents(fileDependency); //TODO should use fileName as resolved version of fileDependency
 
                 var domainSetup = new AppDomainSetup();
                 domainSetup.ApplicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

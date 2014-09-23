@@ -1,3 +1,4 @@
+using System.IO;
 using dotless.Core.Plugins;
 
 namespace dotless.Core
@@ -57,7 +58,8 @@ namespace dotless.Core
         {
             try
             {
-                var tree = Parser.Parse(source, fileName);
+                string currentPath = Path.GetDirectoryName(fileName);
+                var tree = Parser.Parse(currentPath, source, Path.GetFileName(fileName));
 
                 var env = Env ??
                           new Env

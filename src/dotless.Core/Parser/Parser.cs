@@ -118,7 +118,7 @@ namespace dotless.Core.Parser
             Tokenizer = new Tokenizer(optimization);
         }
 
-        public Ruleset Parse(string input, string fileName)
+        public Ruleset Parse(string currentPath, string input, string fileName)
         {
             Ruleset root;
             FileName = fileName;
@@ -128,7 +128,7 @@ namespace dotless.Core.Parser
                 Tokenizer.SetupInput(input, fileName);
 
                 var parsers = new Parsers(NodeProvider);
-                root = new Root(parsers.Primary(this), GenerateParserError);
+                root = new Root(parsers.Primary(currentPath, this), GenerateParserError);
             }
             catch (ParsingException e)
             {

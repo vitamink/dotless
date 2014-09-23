@@ -49,14 +49,14 @@ namespace dotless.Core.Parser.Tree
         /// </summary>
         protected ImportAction ImportAction { get; set; }
 
-        public Import(Quoted path, IImporter importer, Value features, bool isOnce)
-            : this(path.Value, importer, features, isOnce)
+        public Import(string currentPath, Quoted path, IImporter importer, Value features, bool isOnce)
+            : this(currentPath, path.Value, importer, features, isOnce)
         {
             OriginalPath = path;
         }
 
-        public Import(Url path, IImporter importer, Value features, bool isOnce)
-            : this(path.GetUnadjustedUrl(), importer, features, isOnce)
+        public Import(string currentPath, Url path, IImporter importer, Value features, bool isOnce)
+            : this(currentPath, path.GetUnadjustedUrl(), importer, features, isOnce)
         {
             OriginalPath = path;
         }
@@ -73,7 +73,7 @@ namespace dotless.Core.Parser.Tree
             ImportAction = ImportAction.LeaveImport;
         }
 
-        private Import(string path, IImporter importer, Value features, bool isOnce)
+        private Import(string currentPath, string path, IImporter importer, Value features, bool isOnce)
         {
             if (path == null)
                 throw new ParserException("Imports do not allow expressions");
@@ -83,7 +83,7 @@ namespace dotless.Core.Parser.Tree
             Features = features;
             IsOnce = isOnce;
 
-            ImportAction = Importer.Import(this); // it is assumed to be css if it cannot be found as less
+            ImportAction = Importer.Import(currentPath, this); // it is assumed to be css if it cannot be found as less
         }
 
         public override void AppendCSS(Env env, Context context)

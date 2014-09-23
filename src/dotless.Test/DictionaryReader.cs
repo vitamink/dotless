@@ -23,7 +23,7 @@ namespace dotless.Test
             Contents = contents;
         }
 
-        public string GetFileContents(string fileName)
+        public string GetFileContents(string currentPath, string fileName)
         {
             GetFileContentsCalls.Add(fileName);
 
@@ -38,8 +38,9 @@ namespace dotless.Test
             throw new InvalidOperationException("DictionaryReader does not support binary content.");
         }
 
-        public bool DoesFileExist(string fileName)
+        public bool DoesFileExist(string currentPath, string fileName, out string existingFile)
         {
+		    existingFile = null;
             DoesFileExistCalls.Add(fileName);
 
             return Contents.ContainsKey(fileName);
