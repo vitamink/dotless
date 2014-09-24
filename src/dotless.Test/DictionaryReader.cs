@@ -27,7 +27,7 @@ namespace dotless.Test
         {
             GetFileContentsCalls.Add(fileName);
 
-            if (Contents.ContainsKey(fileName))
+            if (fileName != null && Contents.ContainsKey(fileName))
                 return Contents[fileName];
 
             throw new FileNotFoundException(string.Format("Import {0} not found", fileName), fileName);
@@ -40,7 +40,7 @@ namespace dotless.Test
 
         public bool DoesFileExist(string currentPath, string fileName, out string existingFile)
         {
-		    existingFile = null;
+            existingFile = fileName;
             DoesFileExistCalls.Add(fileName);
 
             return Contents.ContainsKey(fileName);
