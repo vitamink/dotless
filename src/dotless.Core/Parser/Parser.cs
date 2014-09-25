@@ -48,6 +48,7 @@ namespace dotless.Core.Parser
         public Tokenizer Tokenizer { get; set; }
         public IStylizer Stylizer { get; set; }
         public string FileName { get; set; }
+        public string CurrentPath { get; set; }
         public bool Debug { get; set; }
 
         private INodeProvider _nodeProvider;
@@ -118,17 +119,18 @@ namespace dotless.Core.Parser
             Tokenizer = new Tokenizer(optimization);
         }
 
-        public Ruleset Parse(string currentPath, string input, string fileName)
+        public Ruleset Parse(string input, string fileName, string currentPath)
         {
             Ruleset root;
             FileName = fileName;
+            CurrentPath = currentPath;
 
             try
             {
                 Tokenizer.SetupInput(input, fileName);
 
                 var parsers = new Parsers(NodeProvider);
-                root = new Root(parsers.Primary(currentPath, this), GenerateParserError);
+                root = new Root(parsers.Primary(this), GenerateParserError);
             }
             catch (ParsingException e)
             {

@@ -59,7 +59,7 @@ namespace dotless.Core
             try
             {
                 string currentPath = Path.GetDirectoryName(fileName);
-                var tree = Parser.Parse(currentPath, source, Path.GetFileName(fileName));
+                var tree = Parser.Parse(source, Path.GetFileName(fileName), currentPath);
 
                 var env = Env ??
                           new Env

@@ -238,7 +238,7 @@ namespace dotless.Core.Importers
                 {
                     Imports.Add(file);
                 }
-                import.InnerRoot = Parser().Parse(currentPath, contents, lessPath);
+                import.InnerRoot = Parser().Parse(contents, lessPath, currentPath);
             }
             catch
             {

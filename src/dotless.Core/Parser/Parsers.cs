@@ -67,15 +67,15 @@ namespace dotless.Core.Parser
         // Only at one point is the primary rule not called from the
         // block rule: at the root level.
         //
-        public NodeList Primary(string currentPath, Parser parser)
+        public NodeList Primary(Parser parser)
         {
             Node node;
             var root = new NodeList();
 
             GatherComments(parser);
 
-            while (node = MixinDefinition(currentPath, parser) || ExtendRule(parser) || Rule(parser) || PullComments() || Ruleset(currentPath, parser) ||
-                          MixinCall(parser) || Directive(currentPath, parser))
+            while (node = MixinDefinition(parser) || ExtendRule(parser) || Rule(parser) || PullComments() || Ruleset(parser) ||
+                          MixinCall(parser) || Directive(parser))
             {
                 NodeList comments;
                 if (comments = PullComments())
@@ -652,7 +652,7 @@ namespace dotless.Core.Parser
         // Once we've got our params list, and a closing `)`, we parse
         // the `{...}` block.
         //
-        public MixinDefinition MixinDefinition(string currentPath, Parser parser)
+        public MixinDefinition MixinDefinition(Parser parser)
         {
             if ((parser.Tokenizer.CurrentChar != '.' && parser.Tokenizer.CurrentChar != '#') ||
                 parser.Tokenizer.Peek(@"[^{]*}"))
@@ -735,7 +735,7 @@ namespace dotless.Core.Parser
                 condition = Expect(Conditions(parser), "Expected conditions after when (mixin guards)", parser);
             }
 
-            var rules = Block(currentPath, parser);
+            var rules = Block(parser);
 
             PopComments();
 
@@ -1019,12 +1019,12 @@ namespace dotless.Core.Parser
         // The `block` rule is used by `ruleset` and `mixin.definition`.
         // It's a wrapper around the `primary` rule, with added `{}`.
         //
-        public NodeList Block(string currentPath, Parser parser)
+        public NodeList Block(Parser parser)
         {
             if (!parser.Tokenizer.Match('{'))
                 return null;
 
-            var content = Expect(Primary(currentPath, parser), "Expected content inside block", parser);
+            var content = Expect(Primary(parser), "Expected content inside block", parser);
 
             Expect(parser, '}');
 
@@ -1034,7 +1034,7 @@ namespace dotless.Core.Parser
         //
         // div, .class, body > p {...}
         //
-        public Ruleset Ruleset(string currentPath, Parser parser)
+        public Ruleset Ruleset(Parser parser)
         {
             var selectors = new NodeList<Selector>();
 
@@ -1062,7 +1062,7 @@ namespace dotless.Core.Parser
 
             NodeList rules;
 
-            if (selectors.Count > 0 && (rules = Block(currentPath, parser)) != null)
+            if (selectors.Count > 0 && (rules = Block(parser)) != null)
             {
                 return NodeProvider.Ruleset(selectors, rules, parser.Tokenizer.GetNodeLocation(index));
             }
@@ -1128,7 +1128,7 @@ namespace dotless.Core.Parser
         // file-system operation. The function used for importing is
         // stored in `import`, which we pass to the Import constructor.
         //
-        public Import Import(string currentPath, Parser parser)
+        public Import Import(Parser parser)
         {
             Node path = null;
 
@@ -1145,10 +1145,10 @@ namespace dotless.Core.Parser
                 Expect(parser, ';', "Expected ';' (possibly unrecognised media sequence)");
 
                 if (path is Quoted)
-                    return NodeProvider.Import(currentPath, path as Quoted, parser.Importer, features, isOnce, parser.Tokenizer.GetNodeLocation(index));
+                    return NodeProvider.Import(parser.CurrentPath, path as Quoted, parser.Importer, features, isOnce, parser.Tokenizer.GetNodeLocation(index));
 
                 if (path is Url)
-                    return NodeProvider.Import(currentPath, path as Url, parser.Importer, features, isOnce, parser.Tokenizer.GetNodeLocation(index));
+                    return NodeProvider.Import(parser.CurrentPath, path as Url, parser.Importer, features, isOnce, parser.Tokenizer.GetNodeLocation(index));
 
                 throw new ParsingException("unrecognised @import format", parser.Tokenizer.GetNodeLocation(index));
             }
@@ -1161,16 +1161,16 @@ namespace dotless.Core.Parser
         //
         //     @charset "utf-8";
         //
-        public Node Directive(string currentPath, Parser parser)
+        public Node Directive(Parser parser)
         {
             if (parser.Tokenizer.CurrentChar != '@')
                 return null;
 
-            var import = Import(currentPath, parser);
+            var import = Import(parser);
             if (import)
                 return import;
 
-            var media = Media(currentPath, parser);
+            var media = Media(parser);
             if (media)
                 return media;
 
@@ -1244,7 +1244,7 @@ namespace dotless.Core.Parser
 
             if (hasBlock)
             {
-                rules = Block(currentPath, parser);
+                rules = Block(parser);
 
                 if (rules != null) {
                     rules.PreComments = preRulesComments;
@@ -1253,7 +1253,7 @@ namespace dotless.Core.Parser
             }
             else if (isKeyFrame)
             {
-                var keyframeblock = KeyFrameBlock(currentPath, parser, name, identifier, index);
+                var keyframeblock = KeyFrameBlock(parser, name, identifier, index);
                 keyframeblock.PreComments = preRulesComments;
                 return keyframeblock;
             }
@@ -1380,7 +1380,7 @@ namespace dotless.Core.Parser
             return NodeProvider.Value(features, null, parser.Tokenizer.GetNodeLocation(index));
         }
 
-        public Media Media(string currentPath, Parser parser)
+        public Media Media(Parser parser)
         {
             if (!parser.Tokenizer.Match("@media"))
                 return null;
@@ -1391,13 +1391,13 @@ namespace dotless.Core.Parser
 
             var preRulesComments = GatherAndPullComments(parser);
 
-            var rules = Expect(Block(currentPath, parser), "@media block with unrecognised format", parser);
+            var rules = Expect(Block(parser), "@media block with unrecognised format", parser);
 
             rules.PreComments = preRulesComments;
             return NodeProvider.Media(rules, features, parser.Tokenizer.GetNodeLocation(index));
         }
 
-        public Directive KeyFrameBlock(string currentPath, Parser parser, string name, string identifier, int index)
+        public Directive KeyFrameBlock(Parser parser, string name, string identifier, int index)
         {
             if (!parser.Tokenizer.Match('{'))
                 return null;
@@ -1442,7 +1442,7 @@ namespace dotless.Core.Parser
                 
                 var preComments = GatherAndPullComments(parser);
 
-                var block = Expect(Block(currentPath, parser), "Expected css block after key frame identifier", parser);
+                var block = Expect(Block(parser), "Expected css block after key frame identifier", parser);
 
                 block.PreComments = preComments;
                 block.PostComments = GatherAndPullComments(parser);

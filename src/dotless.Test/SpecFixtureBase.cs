@@ -231,7 +231,7 @@
         public string Evaluate(string input, Parser parser, out TestLogger testLogger, string filename)
         {
             //TODO check correct value for null
-            var tree = parser.Parse(null, input.Trim(), filename);
+            var tree = parser.Parse(input.Trim(), filename, null);
             var env = DefaultEnv();
             env.Logger = testLogger = new TestLogger(LogLevel.Info);
             return tree.ToCSS(env);
